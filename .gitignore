@@ -1,0 +1,11 @@
+# file
+*.log
+*.lck
+*.class
+javaconfig.json
+classpath.txt
+
+# dirs
+
+example/
+.vscode/
