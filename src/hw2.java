@@ -32,6 +32,8 @@ public class hw2
         System.out.println("歡迎來到《西非播棋》的世界，遊戲即將開始");
         System.out.println("═════════════════════════════════════════════════");
         Board oware = new Board();
+        oware.printHands(0, 0);
         oware.printBoard();
+        oware.printHands(1, 1);
     }
 }

@@ -60,6 +60,18 @@ public class Board
         System.out.printf(boardstatus, houses[0][0], houses[0][1], houses[0][2], houses[0][3], houses[0][4], houses[0][5],
         houses[1][0], houses[1][1], houses[1][2], houses[1][3], houses[1][4], houses[1][5]);
     }
+    public void printHands(int player, int align)
+    {
+        String playerHands = "[玩家" + (player+1) + "]得分：" + hands[player];
+        //當align=1時，即為靠右對齊，format使用%44s是由於棋盤有49個字符
+        //而得分字串扣掉5個雙字元寬字符(玩、家、得、分、：)，即為49-5=44
+        //並且由於box-drawing字元在不同情況上的寬度不確定，再多使用六個box-drawing字元排版，消除影響
+        if(align == 1)
+            System.out.printf("%44s%n", ("────── " + playerHands));
+        //當align為其他值，預設即為靠左對齊
+        else
+            System.out.println(playerHands + " ──────");
+    }
     public void move(int playside, int num) throws InvalidMoveException
     {
         if(houses[playside][num] == 0)
