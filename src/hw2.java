@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.regex.*;
 
 public class hw2
 {
@@ -26,14 +27,27 @@ public class hw2
             System.exit(0);
         }
     }
+    public static void commandHelp()
+    {
+        System.out.println("指令說明：");
+        System.out.println("    move [編號] ：移動該棋洞的旗子");
+        System.out.println("    game over ：結束遊戲");
+        System.out.println("    help ：顯示本說明");
+        System.out.println("═════════════════════════════════════════════════");
+    }
+    public static void printGame(Board oware)
+    {
+        oware.printHands(0, 0);
+        oware.printBoard();
+        oware.printHands(1, 1);
+    }
     public static void main(String[] args)
     {
         clear();
         System.out.println("歡迎來到《西非播棋》的世界，遊戲即將開始");
         System.out.println("═════════════════════════════════════════════════");
         Board oware = new Board();
-        oware.printHands(0, 0);
-        oware.printBoard();
-        oware.printHands(1, 1);
+        commandHelp();
+        printGame(oware);
     }
 }
