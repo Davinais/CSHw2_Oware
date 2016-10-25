@@ -2,9 +2,9 @@ import java.util.Arrays;
 
 public class Board
 {
-    int hands[] = {0, 0};
-    int houses[][] = {{4, 4, 4, 4, 4, 4},{4, 4, 4, 4, 4, 4}};
-    int winner = -1;
+    private int hands[] = {0, 0};
+    private int houses[][] = {{4, 4, 4, 4, 4, 4},{4, 4, 4, 4, 4, 4}};
+    private int winner = -1;
     //為不採用Integer作迭代，在類別內初始宣告兩迭代值
     private int sideiter = 0, numiter = 0;
     //偽迭代器，逆時針迭代棋洞
@@ -72,14 +72,19 @@ public class Board
         else
             System.out.println(playerHands + " ──────");
     }
-    public void move(int playside, int num) throws InvalidMoveException
+    public void move(int player, int playside, int num) throws InvalidMoveException
     {
+        //檢查是否是移動自己的棋洞
+        if(player != playside)
+            throw new InvalidMoveException("只能移動自己棋洞中的棋子，請重新輸入指令");
+        //檢查欲移動的棋洞裡有沒有棋子
         if(houses[playside][num] == 0)
             throw new InvalidMoveException("選擇的棋洞中沒有棋子，請重新輸入指令");
         int seeds = houses[playside][num];
-        //複製另一陣列，以方便做特殊規則檢查
-        int housescheck[][] = Arrays.copyOf(houses, houses.length);
-        boolean besowed[][] = {{false, false, false, false, false, false},{false, false, false, false, false, false}};
+        //複製另一個棋洞陣列，以方便做特殊規則檢查
+        int housescheck[][] = new int[houses.length][];
+        for(int i=0; i < houses.length; i++)
+            housescheck[i] = Arrays.copyOf(houses[i], houses[i].length);
         housescheck[playside][num] = 0;
         //初始化迭代器之數值
         sideiter = playside;
@@ -90,61 +95,79 @@ public class Board
             if(sideiter == playside && numiter == num)
                 housesIterCCW();
             housescheck[sideiter][numiter]++;
-            besowed[sideiter][numiter] = true;
         }
         //檢查是否遵守特殊規則
-        int opponent = (playside==0)?1:0;
-        //宣告三個檢查值，檢查對方棋盤是否被拿走數、對方棋盤空棋洞數以及玩家其他選擇數
-        int beempty = 0, betaken = 0, otherchoice = 0;
+        //設定一變數代表對手
+        int opponent = (player==0)?1:0;
+        //記錄放置最後一子的棋洞
+        int endside = sideiter, endnum = numiter;
+        //宣告三個檢查值，檢查對方棋盤被拿走數、對方棋盤空棋洞數、玩家可選擇數以及玩家不使對方棋洞不被放棋之選擇數
+        int beempty = 0, betaken = 0, playerchoices = 0, validnotbeemptychoices = 0;
+        //計算對方被取走的棋洞數
+        while(sideiter != playside)
+        {
+            if(housescheck[sideiter][numiter] == 2 || housescheck[sideiter][numiter] == 3)
+                betaken++;
+            housesIterCW();
+        }
         for(int index=0; index < 6; index++)
         {
-            //若對手的棋洞有被播種，檢查是否可能會被拿走
-            if(besowed[opponent][index])
-            {
-                if(housescheck[opponent][index] == 2 || housescheck[opponent][index] == 3)
-                    betaken++;
-            }
-            //否則，檢查對手的棋洞是否為空棋洞
-            else if(housescheck[opponent][index] == 0)
+            //計算對方的空棋洞數
+            if(housescheck[opponent][index] == 0)
                 beempty++;
-            //檢查玩家的棋洞是否是空棋洞，若否，代表有其他選擇
-            if(housescheck[playside][index] == 0)
-                otherchoice++;
+            //計算玩家原來可選擇的棋洞數，因此使用houses而非housescheck
+            if(houses[playside][index] != 0)
+            {
+                playerchoices++;
+                //檢查可使對方棋洞不為空的選擇數，採取該棋洞編號與內部棋子數之和是否會超過陣列索引值為判定依據
+                if(playside == 0)
+                {
+                    if(index - houses[playside][index] < 0)
+                        validnotbeemptychoices++;
+                }
+                else
+                {
+                    if(index + houses[playside][index] > 5)
+                        validnotbeemptychoices++;
+                }
+            }
         }
         //若全部皆為空棋洞，則對方棋盤是否全空為真
         if(beempty == 6)
         {
-            //檢查是否有其他選擇
-            if(otherchoice != 0)
-                throw new InvalidMoveException("除非只能選擇這個棋洞，否則必須選擇能讓對手棋盤任一棋洞至少擁有一顆棋子的棋步，請重新輸入指令");
+            //檢查是否有選擇可使對方棋洞不為空
+            if(validnotbeemptychoices > 0)
+                throw new InvalidMoveException("除非沒有其他選擇，否則必須選擇能讓對手棋盤任一棋洞至少擁有一顆棋子的棋步，請重新輸入指令");
         }
         //若不是全部皆為空棋洞，但空棋洞數目加上被拿走棋洞數目為6，則對方棋盤是否被全拿走為真
         else if(beempty+betaken == 6)
         {
-            //檢查是否有其他選擇
-            if(otherchoice != 0)
+            //檢查是否有其他選擇可不拿走對方棋盤裡全部的棋子
+            if(playerchoices > 1)
                 throw new InvalidMoveException("除非只能選擇這個棋洞，否則不可一次獲取對方棋盤全部的棋子，請重新輸入指令");
         }
         //若通過特殊規則檢查，則將複製的棋洞物件參照回傳給原本的棋洞
         houses = housescheck;
-        addToHands(playside, sideiter, numiter);
+        //計算可以加進得分區的棋子數並加入該玩家得分區
+        addToHands(playside, endside, endnum);
     }
     public void addToHands(int player, int endside, int endnum)
     {
         if(player == endside)
             return;
-        //為保險而重賦值
         sideiter = endside;
         numiter = endnum;
-        while(player != sideiter && houses[sideiter][numiter] == 2 || houses[sideiter][numiter] == 3)
+        while(player != sideiter && (houses[sideiter][numiter] == 2 || houses[sideiter][numiter] == 3))
         {
             hands[player] += houses[sideiter][numiter];
             houses[sideiter][numiter] = 0;
             housesIterCW();
         }
     }
+    //檢查是否自動結束遊戲的函數，有一參數moved標記此回合玩家是否已移動過，並且在確定遊戲結束時會算出贏家
     public boolean checkOver(int player, boolean moved)
     {
+        //若未移動過，檢查棋洞是否有棋，若都沒有棋子則回傳true
         if(!moved)
         {
             int beempty = 0;
@@ -155,15 +178,34 @@ public class Board
             }
             if(beempty == 6)
             {
-                winner = (player==0)?1:0;
+                calcWinner();
                 return true;
             }
         }
+        //若已移動過，檢查玩家得分區的棋子是否過半，若是則回傳true
         else if(hands[player] > 24)
         {
-            winner = player;
+            calcWinner();
             return true;
         }
+        //若以上皆非，則為false
         return false;
+    }
+    //以比較得分區棋子數多寡的方式找出贏家，當平手時，贏家紀錄為-1
+    public void calcWinner()
+    {
+        if(hands[0] > hands[1])
+            winner = 0;
+        else if(hands[1] > hands[0])
+            winner = 1;
+        else
+            winner = -1;
+    }
+    public String getWinnerName()
+    {
+        if(winner != -1)
+            return "[玩家" + (winner+1) +"]";
+        else
+            return "從缺，雙方平手";
     }
 }

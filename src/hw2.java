@@ -29,6 +29,7 @@ public class hw2
     }
     public static void commandHelp()
     {
+        System.out.println("═════════════════════════════════════════════════");
         System.out.println("指令說明：");
         System.out.println("    move [編號] ：移動該棋洞的旗子");
         System.out.println("    game over ：結束遊戲");
@@ -44,10 +45,82 @@ public class hw2
     public static void main(String[] args)
     {
         clear();
-        System.out.println("歡迎來到《西非播棋》的世界，遊戲即將開始");
-        System.out.println("═════════════════════════════════════════════════");
+        System.out.println("歡迎來到《西非播棋》的世界，遊戲即將開始(′·ω·`)");
         Board oware = new Board();
+        int player = 0;
+        Pattern movecmd = Pattern.compile("move ([12])-([1-6])");
         commandHelp();
-        printGame(oware);
+        while(true)
+        {
+            boolean nextturn = false, gameovercmd = false,needprintgame = true;
+            if(oware.checkOver(player, false))
+            {
+                printGame(oware);
+                System.out.println("[玩家" + (player+1) + "] 無棋可動，遊戲結束！");
+                break;
+            }
+            do
+            {
+                if(needprintgame)
+                {
+                    printGame(oware);
+                    needprintgame = false;
+                }
+                System.out.println("[玩家" + (player+1) + "] 請輸入想進行的指令");
+                System.out.print(">>> ");
+                String command = ConsoleIn.readLine();
+                Matcher movematch = movecmd.matcher(command);
+                if(movematch.matches())
+                {
+                    try
+                    {
+                        int moveside = (Integer.parseInt(movematch.group(1))-1);
+                        int movenum = (Integer.parseInt(movematch.group(2))-1);
+                        oware.move(player, moveside, movenum);
+                        nextturn = true;
+                    }
+                    catch(InvalidMoveException e)
+                    {
+                        System.out.println(e.getMessage());
+                    }
+                    catch(NumberFormatException e){/*不可能發生*/}
+                }
+                else
+                {
+                    switch(command)
+                    {
+                        case "game over":
+                            nextturn = true;
+                            gameovercmd = true;
+                            oware.calcWinner();
+                            break;
+                        case "help":
+                            clear();
+                            commandHelp();
+                            needprintgame = true;
+                            break;
+                        default:
+                            System.out.println("無此指令，請重新輸入！");
+                    }
+                }
+            }while(!nextturn);
+            if(oware.checkOver(player, true))
+            {
+                System.out.println("[玩家" + (player+1) + "] 得分棋子數已過半，遊戲結束！");
+                break;
+            }
+            else if(gameovercmd)
+            {
+                System.out.println("[玩家" + (player+1) + "] 輸入遊戲結束指令，遊戲結束！");
+                break;
+            }
+            else
+            {
+                player = (player == 0)?1:0;
+                clear();
+            }
+        }
+        System.out.println("勝利者為：" + oware.getWinnerName() + "！");
+        System.out.println("感謝遊玩《西非播棋》，我們下次再見～");
     }
 }
