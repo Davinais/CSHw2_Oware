@@ -208,4 +208,12 @@ public class Board
         else
             return "從缺，雙方平手";
     }
+    public int getHouses(int playside, int num)
+    {
+        return houses[playside][num];
+    }
+    public int getHands(int player)
+    {
+        return hands[player];
+    }
 }

@@ -99,6 +99,10 @@ public class hw2
                             commandHelp();
                             needprintgame = true;
                             break;
+                        case "gui":
+                            OwareBoardGUI.setBoard(oware);
+                            OwareBoardGUI.launch(OwareBoardGUI.class);
+                            break;
                         default:
                             System.out.println("無此指令，請重新輸入！");
                     }
