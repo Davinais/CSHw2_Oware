@@ -17,11 +17,10 @@ import javafx.stage.Stage;
 class HousesView extends ImageView
 {
     private Rectangle2D[] clips;
-    private int chessAmount;
+    private int chessNum;
 
     public HousesView(Image chessImage, int chessAmount, int cellsColumns, int rowCounts, int initial)
     {
-        this.chessAmount = chessAmount;
         double chessWidth = chessImage.getWidth() / cellsColumns;
         double chessHeight = chessImage.getHeight() / rowCounts;
         clips = new Rectangle2D[chessAmount];
@@ -45,11 +44,27 @@ class HousesView extends ImageView
     public void setChessNum(int chessNum)
     {
         setViewport(clips[chessNum]);
+        this.chessNum = chessNum;
+    }
+}
+class BoardPane extends GridPane
+{
+    private HousesView[] houses = new HousesView[12];
+    private Board oware;
+
+    public BoardPane(Board oware, Image chessImage)
+    {
+        super();
+        this.oware = oware;
+        for(int i=0; i < houses.length; i++)
+        {
+            houses[i] = new HousesView(chessImage, 25, 5, 5, oware.getHouses((i/6), (i%6)));
+            add(houses[i], (i%6), (i/6));
+        }
     }
 }
 public class OwareBoardGUI extends Application
 {
-    private HousesView[] houses = new HousesView[12];
     private static Board oware;
 
     @Override
@@ -57,16 +72,11 @@ public class OwareBoardGUI extends Application
     {
         AnchorPane anchorpane = new AnchorPane();
         Image chessImage = new Image("img/chesses.png");
-        GridPane owareBoard = new GridPane();
+        BoardPane owareBoard = new BoardPane(oware, chessImage);
         owareBoard.setAlignment(Pos.CENTER);
         owareBoard.setStyle("-fx-background-image: url('img/board.png');" + 
         "-fx-background-position: center center;" + 
         "-fx-background-repeat: no-repeat, no-repeat;");
-        for(int i=0; i < houses.length; i++)
-        {
-            houses[i] = new HousesView(chessImage, 25, 5, 5, oware.getHouses((i/6), (i%6)));
-            owareBoard.add(houses[i], (i%6), (i/6));
-        }
         Scene scene = new Scene(owareBoard, 674, 293, Color.LIGHTGRAY);
 
         stage.setScene(scene);
