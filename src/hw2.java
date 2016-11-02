@@ -29,12 +29,12 @@ public class hw2
     }
     public static void commandHelp()
     {
-        System.out.println("═════════════════════════════════════════════════");
+        System.out.println("═══════════════════════════════════════");
         System.out.println("指令說明：");
         System.out.println("    move [編號] ：移動該棋洞的旗子");
         System.out.println("    game over ：結束遊戲");
         System.out.println("    help ：顯示本說明");
-        System.out.println("═════════════════════════════════════════════════");
+        System.out.println("═══════════════════════════════════════");
     }
     public static void printGame(Board oware)
     {
@@ -47,11 +47,11 @@ public class hw2
         clear();
         System.out.println("歡迎來到《西非播棋》的世界，遊戲即將開始(′·ω·`)");
         Board oware = new Board();
-        int player = 0;
         Pattern movecmd = Pattern.compile("move ([12])-([1-6])");
         commandHelp();
         while(true)
         {
+            int player = oware.getCurrentPlayer();
             boolean nextturn = false, gameovercmd = false,needprintgame = true;
             if(oware.checkOver(player, false))
             {
@@ -76,7 +76,7 @@ public class hw2
                     {
                         int moveside = (Integer.parseInt(movematch.group(1))-1);
                         int movenum = (Integer.parseInt(movematch.group(2))-1);
-                        oware.move(player, moveside, movenum);
+                        oware.move(moveside, movenum);
                         nextturn = true;
                     }
                     catch(InvalidMoveException e)
@@ -119,10 +119,7 @@ public class hw2
                 break;
             }
             else
-            {
-                player = (player == 0)?1:0;
                 clear();
-            }
         }
         System.out.println("勝利者為：" + oware.getWinnerName() + "！");
         System.out.println("感謝遊玩《西非播棋》，我們下次再見～");

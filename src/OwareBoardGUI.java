@@ -17,10 +17,12 @@ import javafx.stage.Stage;
 class HousesView extends ImageView
 {
     private Rectangle2D[] clips;
-    private int chessNum;
+    private int chessNum, boardSide, boardNum;
 
-    public HousesView(Image chessImage, int chessAmount, int cellsColumns, int rowCounts, int initial)
+    public HousesView(Image chessImage, int chessAmount, int cellsColumns, int rowCounts, int boardSide, int boardNum, int initial)
     {
+        this.boardSide = boardSide;
+        this.boardNum = boardNum;
         double chessWidth = chessImage.getWidth() / cellsColumns;
         double chessHeight = chessImage.getHeight() / rowCounts;
         clips = new Rectangle2D[chessAmount];
@@ -46,6 +48,11 @@ class HousesView extends ImageView
         setViewport(clips[chessNum]);
         this.chessNum = chessNum;
     }
+    public int[] getBoardPosition()
+    {
+        int pos[] = {boardSide, boardNum};
+        return pos;
+    }
 }
 class BoardPane extends GridPane
 {
@@ -58,7 +65,7 @@ class BoardPane extends GridPane
         this.oware = oware;
         for(int i=0; i < houses.length; i++)
         {
-            houses[i] = new HousesView(chessImage, 25, 5, 5, oware.getHouses((i/6), (i%6)));
+            houses[i] = new HousesView(chessImage, 25, 5, 5, (i/6), (i%6), oware.getHouses((i/6), (i%6)));
             add(houses[i], (i%6), (i/6));
         }
     }

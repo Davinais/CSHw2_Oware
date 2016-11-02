@@ -4,7 +4,7 @@ public class Board
 {
     private int hands[] = {0, 0};
     private int houses[][] = {{4, 4, 4, 4, 4, 4},{4, 4, 4, 4, 4, 4}};
-    private int winner = -1;
+    private int currentplay = 0, winner = -1;
     //為不採用Integer作迭代，在類別內初始宣告兩迭代值
     private int sideiter = 0, numiter = 0;
     //偽迭代器，逆時針迭代棋洞
@@ -72,10 +72,10 @@ public class Board
         else
             System.out.println(playerHands + " ──────");
     }
-    public void move(int player, int playside, int num) throws InvalidMoveException
+    public void move(int playside, int num) throws InvalidMoveException
     {
         //檢查是否是移動自己的棋洞
-        if(player != playside)
+        if(currentplay != playside)
             throw new InvalidMoveException("只能移動自己棋洞中的棋子，請重新輸入指令");
         //檢查欲移動的棋洞裡有沒有棋子
         if(houses[playside][num] == 0)
@@ -98,7 +98,7 @@ public class Board
         }
         //檢查是否遵守特殊規則
         //設定一變數代表對手
-        int opponent = (player==0)?1:0;
+        int opponent = (currentplay==0)?1:0;
         //記錄放置最後一子的棋洞
         int endside = sideiter, endnum = numiter;
         //宣告三個檢查值，檢查對方棋盤被拿走數、對方棋盤空棋洞數、玩家可選擇數以及玩家不使對方棋洞不被放棋之選擇數
@@ -150,6 +150,7 @@ public class Board
         houses = housescheck;
         //計算可以加進得分區的棋子數並加入該玩家得分區
         addToHands(playside, endside, endnum);
+        setCurrentPlayer(opponent);
     }
     public void addToHands(int player, int endside, int endnum)
     {
@@ -201,6 +202,10 @@ public class Board
         else
             winner = -1;
     }
+    public void setCurrentPlayer(int player)
+    {
+        currentplay = player;
+    }
     public String getWinnerName()
     {
         if(winner != -1)
@@ -215,5 +220,9 @@ public class Board
     public int getHands(int player)
     {
         return hands[player];
+    }
+    public int getCurrentPlayer()
+    {
+        return currentplay;
     }
 }
