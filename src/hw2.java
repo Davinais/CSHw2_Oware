@@ -116,6 +116,8 @@ public class hw2
             else if(gameovercmd)
             {
                 System.out.println("[玩家" + (player+1) + "] 輸入遊戲結束指令，遊戲結束！");
+                oware.housesToHands();
+                oware.calcWinner();
                 break;
             }
             else

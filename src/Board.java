@@ -165,6 +165,14 @@ public class Board
             housesIterCW();
         }
     }
+    public void housesToHands()
+    {
+        for(int i=0; i < houses.length; i++)
+        {
+            for(int j=0; j < houses[i].length; j++)
+                hands[i] += houses[i][j];
+        }
+    }
     //檢查是否自動結束遊戲的函數，有一參數moved標記此回合玩家是否已移動過，並且在確定遊戲結束時會算出贏家
     public boolean checkOver(int player, boolean moved)
     {
@@ -179,6 +187,7 @@ public class Board
             }
             if(beempty == 6)
             {
+                housesToHands();
                 calcWinner();
                 return true;
             }
@@ -186,6 +195,7 @@ public class Board
         //若已移動過，檢查玩家得分區的棋子是否過半，若是則回傳true
         else if(hands[player] > 24)
         {
+            housesToHands();
             calcWinner();
             return true;
         }
