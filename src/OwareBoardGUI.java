@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
@@ -89,6 +90,7 @@ class BoardPane extends GridPane
         {
             oware.move(startSide, startNum);
             updateBoard();
+            fireEvent(new UpdateHandsEvent());
         }
         catch(InvalidMoveException e)
         {
@@ -102,6 +104,26 @@ class BoardPane extends GridPane
             for(int j=0; j < houses[i].length; j++)
                 houses[i][j].setChessNum(oware.getHouses(i, j));
         }
+    }
+}
+class HandsLabel extends Label
+{
+    private int player, hands;
+    private String handsShowString = "[玩家%d]得分：%d";
+    private Board oware;
+
+    public HandsLabel(Board oware, int player)
+    {
+        super();
+        this.oware = oware;
+        this.player = player;
+        setStyle("-fx-font-size: 16pt;");
+        updateHands();
+    }
+    public void updateHands()
+    {
+        hands = oware.getHands(player);
+        textProperty().setValue(String.format(handsShowString, (player+1), hands));
     }
 }
 class HousesMoveEvent extends Event
@@ -122,6 +144,14 @@ class HousesMoveEvent extends Event
         return pos[1];
     }
 }
+class UpdateHandsEvent extends Event
+{
+    public static final EventType<UpdateHandsEvent> UPDATE_HANDS = new EventType<>(Event.ANY, "UPDATE_HANDS");
+    public UpdateHandsEvent()
+    {
+        super(UPDATE_HANDS);
+    }
+}
 public class OwareBoardGUI extends Application
 {
     private static Board oware;
@@ -136,7 +166,15 @@ public class OwareBoardGUI extends Application
         owareBoard.setStyle("-fx-background-image: url('img/board.png');" + 
         "-fx-background-position: center center;" + 
         "-fx-background-repeat: no-repeat, no-repeat;");
-        Scene scene = new Scene(owareBoard, 674, 293, Color.LIGHTGRAY);
+        HandsLabel playerHands[] = new HandsLabel[2];
+        for(int i=0; i<2; i++)
+            playerHands[i] = new HandsLabel(oware, i);
+        VBox gameInfo = new VBox(playerHands[0], owareBoard, playerHands[1]);
+        gameInfo.addEventHandler(UpdateHandsEvent.UPDATE_HANDS, event -> {
+            playerHands[0].updateHands();
+            playerHands[1].updateHands();
+        });
+        Scene scene = new Scene(gameInfo, 674, 293, Color.LIGHTGRAY);
 
         stage.setScene(scene);
         stage.setTitle("西非播棋");
