@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.Pos;
 import javafx.event.*;
@@ -9,9 +10,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.Cursor;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -32,23 +35,36 @@ class HousesView extends ImageView
         //建立clip物件
         for(int i=0; i < chessAmount; i++)
             clips[i] = new Rectangle2D((i%cellsColumns)*chessWidth, (i/cellsColumns)*chessHeight, chessWidth, chessHeight);
-        //讓滑鼠滑進去時有陰影
-        DropShadow drop = new DropShadow(12, Color.GOLD);
-        //建立當點下滑鼠時會送出的事件，用以將起始位置傳送給BoardPane
-        HousesMoveEvent move = new HousesMoveEvent(getBoardPosition());
-        //設定滑鼠滑入與滑出時的事件
-        setOnMouseEntered(event -> {
-            setEffect(drop);
-            setCursor(Cursor.HAND);
-        });
-        setOnMouseExited(event -> {
-            setEffect(null);
-            setCursor(null);
-        });
-        //設定點下滑鼠的事件
-        setOnMouseClicked(event -> fireEvent(move));
+        setAvaliable(true);
         setImage(chessImage);
         setChessNum(initial);
+    }
+    public void setAvaliable(boolean avaliable)
+    {
+        if(avaliable)
+        {
+            //讓滑鼠滑進去時有陰影
+            DropShadow drop = new DropShadow(12, Color.GOLD);
+            //建立當點下滑鼠時會送出的事件，用以將起始位置傳送給BoardPane
+            HousesMoveEvent move = new HousesMoveEvent(getBoardPosition());
+            //設定滑鼠滑入與滑出時的事件
+            setOnMouseEntered(event -> {
+                setEffect(drop);
+                setCursor(Cursor.HAND);
+            });
+            setOnMouseExited(event -> {
+                setEffect(null);
+                setCursor(null);
+            });
+            //設定點下滑鼠的事件
+            setOnMouseClicked(event -> fireEvent(move));
+        }
+        else
+        {
+            setOnMouseEntered(null);
+            setOnMouseExited(null);
+            setOnMouseClicked(null);
+        }
     }
     //設定棋洞內的旗子數目
     public void setChessNum(int chessNum)
@@ -108,9 +124,15 @@ class BoardPane extends GridPane
     {
         try
         {
+            int moveplayer = oware.getCurrentPlayer();
+            int opponent = (moveplayer==0)?1:0;
             oware.move(startSide, startNum);
             updateBoard();
-            fireEvent(new UpdateHandsEvent());
+            fireEvent(new UpdateTextEvent());
+            if(oware.checkOver(moveplayer, true))
+                fireEvent(new GameOverEvent("[玩家" + (moveplayer+1) + "] 得分棋子數已過半，遊戲結束！"));
+            else if(oware.checkOver(opponent, false))
+                fireEvent(new GameOverEvent("[玩家" + (opponent+1) + "] 無棋可動，遊戲結束！"));
         }
         catch(InvalidMoveException e)
         {
@@ -118,7 +140,7 @@ class BoardPane extends GridPane
             invalidMoveText.textProperty().setValue(e.getMessage());
             //設定提示框出現的位置
             invalidMove.setX(boardStage.getX() + houses[startSide][startNum].getLayoutX());
-            invalidMove.setY(boardStage.getY() + (this.getLayoutY()*(startSide+1)) + (this.getHeight()*startSide));
+            invalidMove.setY(boardStage.getY() + this.getLayoutY() + (invalidMoveText.getHeight()*startSide) + (this.getHeight()*startSide));
             //顯示提示框
             invalidMove.show(boardStage);
         }
@@ -132,25 +154,47 @@ class BoardPane extends GridPane
                 houses[i][j].setChessNum(oware.getHouses(i, j));
         }
     }
+    public void setBoardAvaliable(boolean avaliable)
+    {
+        for(int i=0; i < houses.length; i++)
+        {
+            for(int j=0; j < houses[i].length; j++)
+                houses[i][j].setAvaliable(avaliable);
+        }
+    }
 }
-class HandsLabel extends Label
+class HandsText extends Text
 {
     private int player, hands;
     private String handsShowString = "[玩家%d]得分：%d";
     private Board oware;
 
-    public HandsLabel(Board oware, int player)
+    public HandsText(Board oware, int player)
     {
         super();
         this.oware = oware;
         this.player = player;
-        setStyle("-fx-font-size: 16pt;");
+        setStyle("-fx-font-size: 14pt;");
         updateHands();
     }
     public void updateHands()
     {
         hands = oware.getHands(player);
         textProperty().setValue(String.format(handsShowString, (player+1), hands));
+    }
+}
+class GameOverEvent extends Event
+{
+    private String message;
+    public static final EventType<GameOverEvent> GAME_OVER = new EventType<>(Event.ANY, "GAME_OVER");
+    public GameOverEvent(String m)
+    {
+        super(GAME_OVER);
+        message = m;
+    }
+    public String getMessage()
+    {
+        return message;
     }
 }
 class HousesMoveEvent extends Event
@@ -171,36 +215,65 @@ class HousesMoveEvent extends Event
         return pos[1];
     }
 }
-class UpdateHandsEvent extends Event
+class UpdateTextEvent extends Event
 {
-    public static final EventType<UpdateHandsEvent> UPDATE_HANDS = new EventType<>(Event.ANY, "UPDATE_HANDS");
-    public UpdateHandsEvent()
+    public static final EventType<UpdateTextEvent> UPDATE_TEXT = new EventType<>(Event.ANY, "UPDATE_TEXT");
+    public UpdateTextEvent()
     {
-        super(UPDATE_HANDS);
+        super(UPDATE_TEXT);
     }
 }
 public class OwareBoardGUI extends Application
 {
+    private final double margin = 37.0;
     private static Board oware;
 
     @Override
     public void start(Stage stage)
     {
-        AnchorPane anchorpane = new AnchorPane();
         Image chessImage = new Image("img/chesses.png");
         BoardPane owareBoard = new BoardPane(oware, chessImage, stage);
-        HandsLabel playerHands[] = new HandsLabel[2];
+        Text currentPlayer = new Text("現在是[玩家" + (oware.getCurrentPlayer()+1) + "]的回合");
+        currentPlayer.setTextAlignment(TextAlignment.CENTER);
+        currentPlayer.setStyle("-fx-font-size: 16pt;");
+        HandsText playerHands[] = new HandsText[2];
+        HBox handsBox[] = new HBox[2];
         for(int i=0; i<2; i++)
-            playerHands[i] = new HandsLabel(oware, i);
-        VBox gameInfo = new VBox(playerHands[0], owareBoard, playerHands[1]);
-        gameInfo.addEventHandler(UpdateHandsEvent.UPDATE_HANDS, event -> {
+        {
+            playerHands[i] = new HandsText(oware, i);
+            handsBox[i] = new HBox(playerHands[i]);
+            if(i == 0)
+                handsBox[i].setAlignment(Pos.CENTER_LEFT);
+            else
+                handsBox[i].setAlignment(Pos.CENTER_RIGHT);
+        }
+        Button gameOverButton = new Button("結束本局");
+        gameOverButton.setOnMouseClicked(event -> {
+            oware.housesToHands();
+            oware.calcWinner();
+            gameOverButton.fireEvent(new GameOverEvent("[玩家" + (oware.getCurrentPlayer()+1) + "] 按下結束此局按鈕，遊戲結束！"));
+        });
+        HBox buttonBox = new HBox(gameOverButton);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        VBox gameInfo = new VBox(currentPlayer, handsBox[0], owareBoard, handsBox[1], buttonBox);
+        VBox.setMargin(handsBox[0], new Insets(0.0, 0.0, 0.0, margin));
+        VBox.setMargin(handsBox[1], new Insets(0.0, margin, 0.0, 0.0));
+        VBox.setMargin(buttonBox, new Insets(0.0, margin, 0.0, 0.0));
+        gameInfo.setAlignment(Pos.CENTER);
+        gameInfo.addEventHandler(UpdateTextEvent.UPDATE_TEXT, event -> {
             playerHands[0].updateHands();
             playerHands[1].updateHands();
+            currentPlayer.textProperty().setValue("現在是[玩家" + (oware.getCurrentPlayer()+1) + "]的回合");
         });
-        Scene scene = new Scene(gameInfo, 674, 293, Color.LIGHTGRAY);
+        Scene scene = new Scene(gameInfo, (600+margin*2), 343, Color.LIGHTGRAY);
+        scene.addEventHandler(GameOverEvent.GAME_OVER, event -> {
+            owareBoard.setBoardAvaliable(false);
+            currentPlayer.textProperty().setValue(event.getMessage() + "\n勝利者為：" + oware.getWinnerName() + "！");
+        });
 
         stage.setScene(scene);
         stage.setTitle("西非播棋");
+        stage.setResizable(false);
         stage.show();
     }
     public static void setBoard(Board oware)
