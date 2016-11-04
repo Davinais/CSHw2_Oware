@@ -13,6 +13,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.Cursor;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 
 class HousesView extends ImageView
@@ -65,12 +66,16 @@ class HousesView extends ImageView
 class BoardPane extends GridPane
 {
     private HousesView[][] houses = new HousesView[2][6];
+    private Popup invalidMove = new Popup();
+    private Label invalidMoveText = new Label();
     private Board oware;
+    private Stage boardStage;
 
-    public BoardPane(Board oware, Image chessImage)
+    public BoardPane(Board oware, Image chessImage, Stage boardStage)
     {
         super();
         this.oware = oware;
+        this.boardStage = boardStage;
         //初始化棋洞，並將棋洞放入棋盤的格子中
         for(int i=0; i < houses.length; i++)
         {
@@ -80,6 +85,21 @@ class BoardPane extends GridPane
                 add(houses[i][j], j, i);
             }
         }
+        setAlignment(Pos.CENTER);
+        setStyle("-fx-background-image: url('img/board.png');" + 
+        "-fx-background-position: center center;" + 
+        "-fx-background-repeat: no-repeat, no-repeat;");
+        /*設定當選擇不合法棋洞時會跳出的提示框*/
+        //使提示框能夠自動符合其內容的大小
+        invalidMove.setAutoFix(true);
+        //使提示框在失去焦點時會自動隱藏
+        invalidMove.setAutoHide(true);
+        //使提示框在按下未被處理的Esc鍵時會自動隱藏
+        invalidMove.setHideOnEscape(true);
+        invalidMoveText.setStyle("-fx-background-color: seashell;" + "-fx-border-color: black;" +
+        "-fx-padding: 6;" + "-fx-border-radius: 5px;" + "-fx-font-size: 12px;");
+        //將錯誤訊息物件放入提示框內容中
+        invalidMove.getContent().add(invalidMoveText);
         //建立事件接收器，當接受到棋洞被點擊傳來的事件時，呼叫HousesMove()進行移動
         this.addEventHandler(HousesMoveEvent.HOUSES_MOVE, event -> HousesMove(event.getPosX(), event.getPosY()));
     }
@@ -94,6 +114,13 @@ class BoardPane extends GridPane
         }
         catch(InvalidMoveException e)
         {
+            //設定提示框的錯誤訊息
+            invalidMoveText.textProperty().setValue(e.getMessage());
+            //設定提示框出現的位置
+            invalidMove.setX(boardStage.getX() + houses[startSide][startNum].getLayoutX());
+            invalidMove.setY(boardStage.getY() + (this.getLayoutY()*(startSide+1)) + (this.getHeight()*startSide));
+            //顯示提示框
+            invalidMove.show(boardStage);
         }
     }
     //刷新棋盤的函數
@@ -161,11 +188,7 @@ public class OwareBoardGUI extends Application
     {
         AnchorPane anchorpane = new AnchorPane();
         Image chessImage = new Image("img/chesses.png");
-        BoardPane owareBoard = new BoardPane(oware, chessImage);
-        owareBoard.setAlignment(Pos.CENTER);
-        owareBoard.setStyle("-fx-background-image: url('img/board.png');" + 
-        "-fx-background-position: center center;" + 
-        "-fx-background-repeat: no-repeat, no-repeat;");
+        BoardPane owareBoard = new BoardPane(oware, chessImage, stage);
         HandsLabel playerHands[] = new HandsLabel[2];
         for(int i=0; i<2; i++)
             playerHands[i] = new HandsLabel(oware, i);
