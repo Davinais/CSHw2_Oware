@@ -43,6 +43,17 @@ public class Board
                 numiter--;
         }
     }
+    public void initialize()
+    {
+        for(int i=0; i<2; i++)
+        {
+            hands[i] = 0;
+            for(int j=0; j<6; j++)
+                houses[i][j] = 4;
+        }
+        currentplay = 0;
+        winner = -1;
+    }
     public void printBoard()
     {
         String boardstatus =
@@ -187,7 +198,6 @@ public class Board
             }
             if(beempty == 6)
             {
-                housesToHands();
                 calcWinner();
                 return true;
             }
@@ -195,7 +205,6 @@ public class Board
         //若已移動過，檢查玩家得分區的棋子是否過半，若是則回傳true
         else if(hands[player] > 24)
         {
-            housesToHands();
             calcWinner();
             return true;
         }

@@ -223,6 +223,14 @@ class UpdateTextEvent extends Event
         super(UPDATE_TEXT);
     }
 }
+class GameRestartEvent extends Event
+{
+    public static final EventType<GameRestartEvent> GAME_RESTART = new EventType<>(Event.ANY, "GAME_RESTART");
+    public GameRestartEvent()
+    {
+        super(GAME_RESTART);
+    }
+}
 public class OwareBoardGUI extends Application
 {
     private final double margin = 37.0;
@@ -253,8 +261,13 @@ public class OwareBoardGUI extends Application
             oware.calcWinner();
             gameOverButton.fireEvent(new GameOverEvent("[玩家" + (oware.getCurrentPlayer()+1) + "] 按下結束此局按鈕，遊戲結束！"));
         });
-        HBox buttonBox = new HBox(gameOverButton);
+        Button restartButton = new Button("再來一局");
+        restartButton.setOnMouseClicked(event -> {
+            restartButton.fireEvent(new GameRestartEvent());
+        });
+        HBox buttonBox = new HBox(restartButton, gameOverButton);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        restartButton.setVisible(false);
         VBox gameInfo = new VBox(currentPlayer, handsBox[0], owareBoard, handsBox[1], buttonBox);
         VBox.setMargin(handsBox[0], new Insets(0.0, 0.0, 0.0, margin));
         VBox.setMargin(handsBox[1], new Insets(0.0, margin, 0.0, 0.0));
@@ -268,7 +281,17 @@ public class OwareBoardGUI extends Application
         Scene scene = new Scene(gameInfo, (600+margin*2), 343, Color.LIGHTGRAY);
         scene.addEventHandler(GameOverEvent.GAME_OVER, event -> {
             owareBoard.setBoardAvaliable(false);
+            gameOverButton.setVisible(false);
+            restartButton.setVisible(true);
             currentPlayer.textProperty().setValue(event.getMessage() + "\n勝利者為：" + oware.getWinnerName() + "！");
+        });
+        scene.addEventHandler(GameRestartEvent.GAME_RESTART, event -> {
+            oware.initialize();
+            owareBoard.setBoardAvaliable(true);
+            owareBoard.updateBoard();
+            restartButton.fireEvent(new UpdateTextEvent());
+            restartButton.setVisible(false);
+            gameOverButton.setVisible(true);
         });
 
         stage.setScene(scene);
