@@ -1,3 +1,11 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 public class Board
@@ -7,6 +15,8 @@ public class Board
     private int currentplay = 0, winner = -1;
     //為不採用Integer作迭代，在類別內初始宣告兩迭代值
     private int sideiter = 0, numiter = 0;
+    private static final String savepath = "oware.brd";
+    private static File savefile = new File(savepath);
     //偽迭代器，逆時針迭代棋洞
     private void housesIterCCW()
     {
@@ -53,6 +63,54 @@ public class Board
         }
         currentplay = 0;
         winner = -1;
+    }
+    public void saveBoard() throws IOException
+    {
+        int playernum = 2, housesnum = 6, handsnum = 1, intsize = 4;
+        if(!savefile.exists())
+            savefile.createNewFile();
+        FileOutputStream savefo = new FileOutputStream(savefile);
+        ByteBuffer savebuf = ByteBuffer.allocate(intsize*(playernum*(housesnum+handsnum)+1));
+        IntBuffer saveintbuf = savebuf.asIntBuffer();
+        saveintbuf.clear();
+        for(int i=0; i < 2; i++)
+        {
+            saveintbuf.put(hands[i]);
+            saveintbuf.put(houses[i]);
+        }
+        saveintbuf.put(currentplay);
+        saveintbuf.flip();
+        System.out.println("存檔中！");
+        FileChannel savechannel = savefo.getChannel();
+        while(savebuf.hasRemaining())
+            savechannel.write(savebuf);
+        savechannel.close();
+        savefo.close();
+        System.out.println("存檔完成！");
+    }
+    public void loadBoard() throws IOException, FileNotFoundException
+    {
+        int playernum = 2, housesnum = 6, handsnum = 1, intsize = 4;
+        if(!savefile.exists())
+            throw new FileNotFoundException("找不到存檔，請確定同目錄下存在oware.brd檔案！");
+        FileInputStream savefi = new FileInputStream(savefile);
+        ByteBuffer savebuf = ByteBuffer.allocate(intsize*(playernum*(housesnum+handsnum)+1));
+        IntBuffer saveintbuf = savebuf.asIntBuffer();
+        savebuf.clear();
+        FileChannel savechannel = savefi.getChannel();
+        System.out.println("讀檔中！");
+        while(savechannel.read(savebuf) > 0);
+        savechannel.close();
+        savefi.close();
+        savebuf.flip();
+        for(int i=0; i < playernum; i++)
+        {
+            hands[i] = saveintbuf.get();
+            for(int j=0; j < housesnum; j++)
+                houses[i][j] = saveintbuf.get();
+        }
+        currentplay = saveintbuf.get();
+        System.out.println("讀檔完成！");
     }
     public void printBoard()
     {

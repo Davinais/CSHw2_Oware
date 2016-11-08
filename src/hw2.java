@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.regex.*;
 
 public class hw2
@@ -33,6 +34,9 @@ public class hw2
         System.out.println("指令說明：");
         System.out.println("    move [編號] ：移動該棋洞的旗子");
         System.out.println("    game over ：結束遊戲");
+        System.out.println("    gui ：顯示GUI介面(僅限一次)");
+        System.out.println("    save ：儲存棋盤至oware.brd");
+        System.out.println("    load ：自oware.brd讀取棋盤");
         System.out.println("    help ：顯示本說明");
         System.out.println("═══════════════════════════════════════");
     }
@@ -102,6 +106,32 @@ public class hw2
                         case "gui":
                             OwareBoardGUI.setBoard(oware);
                             OwareBoardGUI.launch(OwareBoardGUI.class);
+                            break;
+                        case "save":
+                            try
+                            {
+                                oware.saveBoard();
+                            }
+                            catch(IOException e)
+                            {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case "load":
+                            try
+                            {
+                                oware.loadBoard();
+                                player = oware.getCurrentPlayer();
+                                needprintgame = true;
+                            }
+                            catch(FileNotFoundException e)
+                            {
+                                System.out.println(e.getMessage());
+                            }
+                            catch(IOException e)
+                            {
+                                e.printStackTrace();
+                            }
                             break;
                         default:
                             System.out.println("無此指令，請重新輸入！");
