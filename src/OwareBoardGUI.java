@@ -366,6 +366,7 @@ public class OwareBoardGUI extends Application
 
         stage.setScene(scene);
         stage.setTitle("西非播棋");
+        stage.getIcons().add(new Image("img/icon.png"));
         stage.setResizable(false);
         stage.show();
     }
