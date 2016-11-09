@@ -34,7 +34,7 @@ public class hw2
         System.out.println("指令說明：");
         System.out.println("    move [編號] ：移動該棋洞的旗子");
         System.out.println("    game over ：結束遊戲");
-        System.out.println("    gui ：顯示GUI介面(僅限一次)");
+        System.out.println("    gui ：顯示GUI介面，關閉GUI後將同時退出程式");
         System.out.println("    save ：儲存棋盤至oware.brd");
         System.out.println("    load ：自oware.brd讀取棋盤");
         System.out.println("    help ：顯示本說明");
@@ -52,11 +52,12 @@ public class hw2
         System.out.println("歡迎來到《西非播棋》的世界，遊戲即將開始(′·ω·`)");
         Board oware = new Board();
         Pattern movecmd = Pattern.compile("move ([12])-([1-6])");
+        boolean guilaunched = false;
         commandHelp();
         while(true)
         {
             int player = oware.getCurrentPlayer();
-            boolean nextturn = false, gameovercmd = false,needprintgame = true;
+            boolean endturn = false, gameovercmd = false,needprintgame = true;
             if(oware.checkOver(player, false))
             {
                 printGame(oware);
@@ -81,7 +82,7 @@ public class hw2
                         int moveside = (Integer.parseInt(movematch.group(1))-1);
                         int movenum = (Integer.parseInt(movematch.group(2))-1);
                         oware.move(moveside, movenum);
-                        nextturn = true;
+                        endturn = true;
                     }
                     catch(InvalidMoveException e)
                     {
@@ -94,7 +95,7 @@ public class hw2
                     switch(command)
                     {
                         case "game over":
-                            nextturn = true;
+                            endturn = true;
                             gameovercmd = true;
                             oware.calcWinner();
                             break;
@@ -106,6 +107,8 @@ public class hw2
                         case "gui":
                             OwareBoardGUI.setBoard(oware);
                             OwareBoardGUI.launch(OwareBoardGUI.class);
+                            endturn = true;
+                            guilaunched = true;
                             break;
                         case "save":
                             try
@@ -137,8 +140,13 @@ public class hw2
                             System.out.println("無此指令，請重新輸入！");
                     }
                 }
-            }while(!nextturn);
-            if(oware.checkOver(player, true))
+            }while(!endturn);
+            if(guilaunched)
+            {
+                System.out.println("已結束GUI介面，離開遊戲");
+                break;
+            }
+            else if(oware.checkOver(player, true))
             {
                 System.out.println("[玩家" + (player+1) + "] 得分棋子數已過半，遊戲結束！");
                 break;
@@ -153,7 +161,8 @@ public class hw2
             else
                 clear();
         }
-        System.out.println("勝利者為：" + oware.getWinnerName() + "！");
+        if(!guilaunched)
+            System.out.println("勝利者為：" + oware.getWinnerName() + "！");
         System.out.println("感謝遊玩《西非播棋》，我們下次再見～");
     }
 }

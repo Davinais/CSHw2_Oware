@@ -9,35 +9,45 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Alert;
 import javafx.scene.paint.Color;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.Cursor;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 
 class HousesView extends ImageView
 {
-    private Rectangle2D[] clips;
+    private static Rectangle2D[] clips;
+    private static Image chessImage;
     private int chessNum, boardSide, boardNum;
 
-    public HousesView(Image chessImage, int chessAmount, int cellsColumns, int rowCounts, int boardSide, int boardNum, int initial)
+    public HousesView(int boardSide, int boardNum, int initial)
     {
         this.boardSide = boardSide;
         this.boardNum = boardNum;
-        //取得旗子圖片之寬與高
+        setAvaliable(true);
+        setImage(chessImage);
+        setChessNum(initial);
+    }
+    public static void setImageAndClips(Image chessImage, int chessAmount, int cellsColumns, int rowCounts)
+    {
+        HousesView.chessImage = chessImage;
+        //取得棋子圖片之寬與高
         double chessWidth = chessImage.getWidth() / cellsColumns;
         double chessHeight = chessImage.getHeight() / rowCounts;
         clips = new Rectangle2D[chessAmount];
         //建立clip物件
         for(int i=0; i < chessAmount; i++)
             clips[i] = new Rectangle2D((i%cellsColumns)*chessWidth, (i/cellsColumns)*chessHeight, chessWidth, chessHeight);
-        setAvaliable(true);
-        setImage(chessImage);
-        setChessNum(initial);
     }
     public void setAvaliable(boolean avaliable)
     {
@@ -92,12 +102,13 @@ class BoardPane extends GridPane
         super();
         this.oware = oware;
         this.boardStage = boardStage;
+        HousesView.setImageAndClips(chessImage, 49, 7, 7);
         //初始化棋洞，並將棋洞放入棋盤的格子中
         for(int i=0; i < houses.length; i++)
         {
             for(int j=0; j < houses[i].length; j++)
             {
-                houses[i][j] = new HousesView(chessImage, 25, 5, 5, i, j, oware.getHouses(i, j));
+                houses[i][j] = new HousesView(i, j, oware.getHouses(i, j));
                 add(houses[i][j], j, i);
             }
         }
@@ -233,7 +244,7 @@ class GameRestartEvent extends Event
 }
 public class OwareBoardGUI extends Application
 {
-    private final double margin = 37.0;
+    private final double margin = 37.0, buttonspace = 5.0;
     private static Board oware;
 
     @Override
@@ -265,20 +276,79 @@ public class OwareBoardGUI extends Application
         restartButton.setOnMouseClicked(event -> {
             restartButton.fireEvent(new GameRestartEvent());
         });
-        HBox buttonBox = new HBox(restartButton, gameOverButton);
-        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        Alert slCompleteAlert = new Alert(Alert.AlertType.INFORMATION);
+        slCompleteAlert.setHeaderText(null);
+        Alert slErrorAlert = new Alert(Alert.AlertType.ERROR);
+        slErrorAlert.setHeaderText(null);
+        Button saveGameButton = new Button("儲存遊戲");
+        Button loadGameButton = new Button("讀取遊戲");
+        saveGameButton.setOnMouseClicked(event -> {
+            loadGameButton.setDisable(true);
+            try
+            {
+                oware.saveBoard();
+                slCompleteAlert.setTitle("儲存遊戲");
+                slCompleteAlert.setContentText("已儲存至oware.brd！");
+                slCompleteAlert.showAndWait();
+            }
+            catch(IOException e)
+            {
+                slErrorAlert.setTitle("儲存遊戲");
+                slErrorAlert.setContentText("發生IO例外，儲存失敗！");
+                slErrorAlert.showAndWait();
+            }
+            finally
+            {
+                loadGameButton.setDisable(false);
+            }
+        });
+        loadGameButton.setOnMouseClicked(event -> {
+            saveGameButton.setDisable(true);
+            try
+            {
+                oware.loadBoard();
+                owareBoard.setBoardAvaliable(true);
+                owareBoard.updateBoard();
+                loadGameButton.fireEvent(new UpdateTextEvent());
+                restartButton.setVisible(false);
+                gameOverButton.setVisible(true);
+                slCompleteAlert.setTitle("讀取遊戲");
+                slCompleteAlert.setContentText("讀取完成！");
+                slCompleteAlert.showAndWait();
+            }
+            catch(FileNotFoundException e)
+            {
+                slErrorAlert.setTitle("讀取遊戲");
+                slErrorAlert.setContentText(e.getMessage());
+                slErrorAlert.showAndWait();
+            }
+            catch(IOException e)
+            {
+                slErrorAlert.setTitle("讀取遊戲");
+                slErrorAlert.setContentText("發生IO例外，讀取失敗！");
+                slErrorAlert.showAndWait();
+            }
+            finally
+            {
+                saveGameButton.setDisable(false);
+            }
+        });
+        Region seperateRegion = new Region();
+        HBox.setHgrow(seperateRegion, Priority.ALWAYS);
+        HBox buttonBox = new HBox(buttonspace, saveGameButton, loadGameButton, seperateRegion , restartButton, gameOverButton);
+        buttonBox.setAlignment(Pos.CENTER);
         restartButton.setVisible(false);
         VBox gameInfo = new VBox(currentPlayer, handsBox[0], owareBoard, handsBox[1], buttonBox);
         VBox.setMargin(handsBox[0], new Insets(0.0, 0.0, 0.0, margin));
         VBox.setMargin(handsBox[1], new Insets(0.0, margin, 0.0, 0.0));
-        VBox.setMargin(buttonBox, new Insets(0.0, margin, 0.0, 0.0));
+        VBox.setMargin(buttonBox, new Insets(0.0, margin, 0.0, margin));
         gameInfo.setAlignment(Pos.CENTER);
         gameInfo.addEventHandler(UpdateTextEvent.UPDATE_TEXT, event -> {
             playerHands[0].updateHands();
             playerHands[1].updateHands();
             currentPlayer.textProperty().setValue("現在是[玩家" + (oware.getCurrentPlayer()+1) + "]的回合");
         });
-        Scene scene = new Scene(gameInfo, (600+margin*2), 343, Color.LIGHTGRAY);
+        Scene scene = new Scene(gameInfo, (600+margin*2), 363, Color.LIGHTGRAY);
         scene.addEventHandler(GameOverEvent.GAME_OVER, event -> {
             owareBoard.setBoardAvaliable(false);
             gameOverButton.setVisible(false);

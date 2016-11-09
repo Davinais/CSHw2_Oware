@@ -17,6 +17,7 @@ public class Board
     private int sideiter = 0, numiter = 0;
     private static final String savepath = "oware.brd";
     private static File savefile = new File(savepath);
+    private static final int saveprefix = 68657966; //'D'+'A'+'O'+'B'
     //偽迭代器，逆時針迭代棋洞
     private void housesIterCCW()
     {
@@ -66,21 +67,21 @@ public class Board
     }
     public void saveBoard() throws IOException
     {
-        int playernum = 2, housesnum = 6, handsnum = 1, intsize = 4;
+        int playernum = 2, housesnum = 6, handsnum = 1, intsize = 4, extrastore = 2;
         if(!savefile.exists())
             savefile.createNewFile();
         FileOutputStream savefo = new FileOutputStream(savefile);
-        ByteBuffer savebuf = ByteBuffer.allocate(intsize*(playernum*(housesnum+handsnum)+1));
+        ByteBuffer savebuf = ByteBuffer.allocate(intsize*(playernum*(housesnum+handsnum)+extrastore));
         IntBuffer saveintbuf = savebuf.asIntBuffer();
         saveintbuf.clear();
-        for(int i=0; i < 2; i++)
+        saveintbuf.put(saveprefix);
+        for(int i=0; i < playernum; i++)
         {
             saveintbuf.put(hands[i]);
             saveintbuf.put(houses[i]);
         }
         saveintbuf.put(currentplay);
         saveintbuf.flip();
-        System.out.println("存檔中！");
         FileChannel savechannel = savefo.getChannel();
         while(savebuf.hasRemaining())
             savechannel.write(savebuf);
@@ -90,19 +91,20 @@ public class Board
     }
     public void loadBoard() throws IOException, FileNotFoundException
     {
-        int playernum = 2, housesnum = 6, handsnum = 1, intsize = 4;
+        int playernum = 2, housesnum = 6, handsnum = 1, intsize = 4, extrastore = 2;
         if(!savefile.exists())
             throw new FileNotFoundException("找不到存檔，請確定同目錄下存在oware.brd檔案！");
         FileInputStream savefi = new FileInputStream(savefile);
-        ByteBuffer savebuf = ByteBuffer.allocate(intsize*(playernum*(housesnum+handsnum)+1));
+        ByteBuffer savebuf = ByteBuffer.allocate(intsize*(playernum*(housesnum+handsnum)+extrastore));
         IntBuffer saveintbuf = savebuf.asIntBuffer();
         savebuf.clear();
         FileChannel savechannel = savefi.getChannel();
-        System.out.println("讀檔中！");
         while(savechannel.read(savebuf) > 0);
         savechannel.close();
         savefi.close();
         savebuf.flip();
+        if(saveintbuf.get() != saveprefix)
+            throw new FileNotFoundException("非正確存檔格式，請確定oware.brd為本程式產生的存檔！");
         for(int i=0; i < playernum; i++)
         {
             hands[i] = saveintbuf.get();
