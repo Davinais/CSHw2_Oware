@@ -221,7 +221,7 @@ public class Board
         houses = housescheck;
         //計算可以加進得分區的棋子數並加入該玩家得分區
         addToHands(playside, endside, endnum);
-        setCurrentPlayer(opponent);
+        currentplay = opponent;
     }
     public void addToHands(int player, int endside, int endnum)
     {
@@ -280,10 +280,6 @@ public class Board
             winner = 1;
         else
             winner = -1;
-    }
-    public void setCurrentPlayer(int player)
-    {
-        currentplay = player;
     }
     public String getWinnerName()
     {
