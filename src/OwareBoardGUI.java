@@ -374,4 +374,9 @@ public class OwareBoardGUI extends Application
     {
         OwareBoardGUI.oware = oware;
     }
+    public static void main(String[] args)
+    {
+        setBoard(new Board());
+        launch();
+    }
 }
