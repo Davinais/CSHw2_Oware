@@ -138,6 +138,7 @@ public class hw2
                             break;
                         default:
                             System.out.println("無此指令，請重新輸入！");
+                            System.out.println("輸入help，可以查看指令列表喔！");
                     }
                 }
             }while(!endturn);
